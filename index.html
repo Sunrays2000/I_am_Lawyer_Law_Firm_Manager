@@ -1,0 +1,2967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I Am Lawyer - Law Firm Manager</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #d7dee8;
+      --paper: #ffffff;
+      --wash: #f3f6fa;
+      --navy: #142033;
+      --blue: #2563eb;
+      --purple: #7c3aed;
+      --green: #059669;
+      --red: #dc2626;
+      --amber: #d97706;
+      --court: #b98d5b;
+      --wall: #b8d8d0;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--wash);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+      padding: 88px 0 58px;
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .42;
+      transform: none !important;
+    }
+
+    .topbar,
+    .footer {
+      position: fixed;
+      left: 0;
+      width: 100%;
+      z-index: 20;
+      background: var(--navy);
+      color: white;
+      box-shadow: 0 2px 12px rgba(2, 6, 23, .2);
+    }
+
+    .topbar {
+      top: 0;
+      min-height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 8px;
+    }
+
+    .stats {
+      width: min(460px, 100%);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 800;
+    }
+
+    .firm-name {
+      grid-column: 1 / -1;
+      min-height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+      color: #e2e8f0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-align: center;
+    }
+
+    .stat {
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      padding: 5px 6px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .label {
+      display: block;
+      color: #94a3b8;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .value {
+      display: block;
+      margin-top: 2px;
+      font-size: clamp(15px, 4.4vw, 21px);
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .subvalue {
+      display: block;
+      margin-top: 2px;
+      color: #94a3b8;
+      font-size: 9px;
+      line-height: 1.1;
+    }
+
+    .green { color: #34d399; }
+    .red { color: #fb7185; }
+    .blue { color: #60a5fa; }
+    .amber { color: #fbbf24; }
+
+    main {
+      width: min(460px, calc(100% - 16px));
+      margin: 0 auto;
+    }
+
+    .view {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .hidden { display: none !important; }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+      overflow: hidden;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #eef2f7;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #334155;
+    }
+
+    .diorama {
+      height: 76px;
+      padding: 5px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      overflow-x: auto;
+      image-rendering: pixelated;
+    }
+
+    .rooms {
+      min-height: 62px;
+      display: flex;
+      align-items: end;
+      gap: 6px;
+    }
+
+    .room {
+      position: relative;
+      flex: 0 0 82px;
+      height: 62px;
+      display: flex;
+      align-items: end;
+      justify-content: space-around;
+      padding-bottom: 4px;
+      background: var(--court);
+      border-left: 3px solid #3d2d22;
+      border-right: 3px solid #3d2d22;
+    }
+
+    .room::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 22px;
+      background:
+        linear-gradient(#f8fafc, #f8fafc) center 9px / 15px 8px no-repeat,
+        var(--wall);
+      border-bottom: 3px solid #5d4037;
+    }
+
+    .person {
+      position: relative;
+      z-index: 1;
+      width: 18px;
+      filter: drop-shadow(0 2px 1px rgba(0,0,0,.2));
+    }
+
+    .arm-left { transform-origin: 2px 7px; animation: leftArm .34s ease-in-out infinite; }
+    .arm-right { transform-origin: 11px 7px; animation: rightArm .34s ease-in-out infinite; animation-delay: .15s; }
+
+    @keyframes leftArm {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(22deg); }
+    }
+
+    @keyframes rightArm {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-22deg); }
+    }
+
+    .family {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: white;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .tracker-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 7px;
+      background: #f8fafc;
+      border: 1px solid #d7dee8;
+    }
+
+    .family-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .strike {
+      opacity: .2;
+      color: var(--red);
+    }
+
+    .strike.on { opacity: 1; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    th,
+    td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #e8edf4;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    td.num,
+    th.num {
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: nowrap;
+    }
+
+    .gross {
+      background: #f8fafc;
+      border-left: 2px solid #172033;
+      border-right: 2px solid #172033;
+      font-weight: 900;
+    }
+
+    .total-row td {
+      background: #eef2f7;
+      font-weight: 900;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 2px 0;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .section-head span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .upgrade-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .upgrade-column {
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .upgrade-column-title {
+      padding: 4px 2px;
+      border-radius: 6px;
+      background: #172033;
+      color: white;
+      font-size: 8px;
+      font-weight: 900;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .upgrade {
+      min-height: 38px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 5px 4px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+      transition: transform .08s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .upgrade:active,
+    .action:active,
+    .case-card:active {
+      transform: scale(.98);
+    }
+
+    .upgrade:hover { border-color: var(--blue); }
+
+    .upgrade strong,
+    .upgrade small {
+      display: block;
+      line-height: 1.15;
+    }
+
+    .upgrade strong { font-size: 8px; }
+    .upgrade small { margin-top: 1px; color: var(--muted); font-size: 7px; }
+
+    .cost {
+      color: var(--red);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 8px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .divider {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--line);
+      margin: 1px 0;
+    }
+
+    .office-upgrade {
+      grid-column: 1 / -1;
+    }
+
+    .docket-hero {
+      padding: 14px 12px;
+      border-radius: 8px;
+      background: #312e81;
+      color: white;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .docket-hero h1 {
+      margin: 0;
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .docket-hero p {
+      margin: 5px 0 0;
+      color: #c7d2fe;
+      font-size: 11px;
+    }
+
+    .prestige-line {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #facc15;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 2px rgba(0,0,0,.35);
+    }
+
+    .prestige-line.no-prestige {
+      color: #fb7185;
+      text-shadow: 0 1px 2px rgba(0,0,0,.28);
+    }
+
+    .docket-totals {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .docket-totals strong {
+      display: block;
+      font-size: 20px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .case-slots,
+    .case-picks {
+      display: grid;
+      gap: 8px;
+    }
+
+    .case-slot,
+    .empty-slot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 54px;
+      padding: 10px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+    }
+
+    .empty-slot {
+      justify-content: center;
+      background: #f1f5f9;
+      border-style: dashed;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .case-slot small,
+    .case-slot strong,
+    .case-card strong,
+    .case-card span {
+      display: block;
+    }
+
+    .case-slot small,
+    .case-card small {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .case-card {
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 7px;
+      padding: 10px;
+      background: white;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      text-align: center;
+      transition: transform .08s ease, border-color .12s ease;
+    }
+
+    .case-card:hover { border-color: var(--purple); }
+
+    .case-picks {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .pick-label {
+      margin-top: auto;
+      padding: 5px;
+      border-radius: 6px;
+      background: var(--navy);
+      color: white;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .trial-picks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .trial-card {
+      min-height: 96px;
+      padding: 9px;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .trial-card strong,
+    .trial-card span {
+      display: block;
+    }
+
+    .trial-card strong {
+      color: #312e81;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .trial-screen {
+      min-height: calc(100vh - 150px);
+      gap: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #0f1c35;
+    }
+
+    .trial-arena {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 10px;
+      align-items: end;
+      padding: 12px;
+      border-radius: 8px;
+      background:
+        linear-gradient(#1e3a8a 0 24px, transparent 24px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 2px, transparent 2px 42px),
+        linear-gradient(#0f1c35 0 58%, #7c5a3a 58% 100%);
+      color: white;
+      border: 2px solid #334155;
+    }
+
+    .trial-side {
+      min-height: 150px;
+      display: grid;
+      align-content: end;
+      justify-items: center;
+      gap: 8px;
+    }
+
+    .trial-side .person {
+      width: 58px;
+    }
+
+    .trial-side.attack-anim {
+      animation: trial-lunge .28s ease;
+    }
+
+    .trial-side.defense-anim {
+      animation: trial-guard .35s ease;
+    }
+
+    @keyframes trial-lunge {
+      0%, 100% { transform: translateX(0); }
+      45% { transform: translateX(14px); }
+    }
+
+    @keyframes trial-guard {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.35) drop-shadow(0 0 10px rgba(96,165,250,.8)); }
+    }
+
+    .rival-attorney .person rect[data-hair] { fill: #b91c1c; }
+    .rival-attorney .person rect[data-tie] { fill: #ef4444; }
+
+    .hp-wrap {
+      width: 100%;
+      display: grid;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .hp-bar {
+      height: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .hp-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #22c55e, #86efac);
+      transition: width .2s ease;
+    }
+
+    .intent-box,
+    .trial-flair,
+    .trial-resource-bar,
+    .trial-actions,
+    .trial-setup {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+    }
+
+    .trial-setup {
+      position: relative;
+      overflow: hidden;
+      background: #fff8dc;
+      border: 3px solid #8b6f3e;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.65), 0 10px 30px rgba(0,0,0,.25);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .trial-setup::before {
+      content: "";
+      position: absolute;
+      top: -2px;
+      left: 18px;
+      width: 120px;
+      height: 24px;
+      border-radius: 0 0 8px 8px;
+      background: #d6b35f;
+      border: 2px solid #8b6f3e;
+      border-top: 0;
+    }
+
+    .trial-folder-title {
+      position: relative;
+      z-index: 1;
+      margin: 10px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #8b6f3e;
+      color: #3f2f13;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .courtroom-mini {
+      height: 82px;
+      margin: 8px 0 12px;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      background:
+        linear-gradient(#0f1c35 0 46%, transparent 46%),
+        linear-gradient(90deg, transparent 0 20%, #8b5a2b 20% 80%, transparent 80%) bottom 6px center / 76% 28px no-repeat,
+        linear-gradient(#7c5a3a, #5b3d27);
+      image-rendering: pixelated;
+      position: relative;
+    }
+
+    .courtroom-mini::before,
+    .courtroom-mini::after {
+      content: "";
+      position: absolute;
+      bottom: 10px;
+      width: 34px;
+      height: 28px;
+      background: #a16207;
+      border: 2px solid #3f2f13;
+    }
+
+    .courtroom-mini::before { left: 28px; }
+    .courtroom-mini::after { right: 28px; }
+
+    .intent-box {
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .trial-flair {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #334155;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      font-style: italic;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .trial-resource-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .trial-resource-bar span {
+      display: block;
+      font-size: 9px;
+      color: var(--muted);
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .trial-resource-bar strong {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .trial-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .trial-extra-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      margin-bottom: 7px;
+    }
+
+    .trial-action {
+      min-height: 54px;
+      border-radius: 8px;
+      background: #334155;
+      color: white;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .trial-action span {
+      display: block;
+      margin-top: 3px;
+      color: #cbd5e1;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .footer {
+      bottom: 0;
+      min-height: 52px;
+      display: flex;
+      justify-content: center;
+      padding: 7px;
+    }
+
+    .footer-inner {
+      width: min(460px, 100%);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .footer-inner.single {
+      grid-template-columns: 1fr;
+    }
+
+    .action {
+      min-height: 38px;
+      border-radius: 8px;
+      color: white;
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1.15;
+      box-shadow: 0 2px 8px rgba(2, 6, 23, .25);
+      transition: transform .08s ease, filter .12s ease;
+    }
+
+    .action:hover { filter: brightness(1.06); }
+
+    .action span {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      opacity: .9;
+    }
+
+    .primary { background: var(--blue); }
+    .grind { background: var(--purple); }
+    .rest { background: var(--green); }
+    .dark { background: #334155; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: #0f1c35;
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-card {
+      width: min(390px, 100%);
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      padding: 22px;
+      background: white;
+      border-top: 8px solid var(--blue);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .modal-card h1,
+    .modal-card h2 {
+      margin: 0 0 8px;
+      line-height: 1.1;
+    }
+
+    .modal-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .intro-card {
+      color: white;
+      background: transparent;
+      box-shadow: none;
+      border: 0;
+    }
+
+    .intro-title {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 4px solid white;
+      color: white;
+      font-size: clamp(34px, 11vw, 52px);
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    #intro-art {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 192px;
+      margin: 4px 0 24px;
+    }
+
+    #intro-art .person {
+      width: 144px;
+      filter: drop-shadow(0 14px 8px rgba(0,0,0,.35));
+    }
+
+    .ethics-status {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin: 10px 0 12px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .ethics-status .stat {
+      padding: 7px;
+      background: white;
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .ethics-status .label {
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .ethics-status .value {
+      font-size: 14px;
+    }
+
+    .ethics-art {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 90px;
+      margin: 2px 0 8px;
+      overflow: hidden;
+    }
+
+    .ethics-art .person {
+      width: 72px;
+    }
+
+    .divorce-art {
+      position: relative;
+      width: 92px;
+      height: 118px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      margin: 0 auto 10px;
+    }
+
+    .divorce-art .person {
+      width: 64px;
+    }
+
+    .broken-heart {
+      position: absolute;
+      top: 0;
+      color: #e11d48;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+      transform: rotate(-10deg);
+      text-shadow: 0 2px 2px rgba(0,0,0,.12);
+    }
+
+    .broken-heart:nth-child(1) { left: 10px; top: 10px; }
+    .broken-heart:nth-child(2) { right: 9px; top: 3px; transform: rotate(12deg); }
+    .broken-heart:nth-child(3) { left: 34px; top: 28px; font-size: 18px; }
+
+    .ethics-license {
+      margin: 0 0 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .intro-text {
+      max-width: 360px;
+      margin: 0 auto 22px;
+      color: #dbe4ef;
+      line-height: 1.5;
+    }
+
+    .firm-entry {
+      max-width: 360px;
+      margin: 0 auto 22px;
+      color: #dbe4ef;
+      text-align: left;
+    }
+
+    .firm-entry label {
+      display: block;
+      margin-bottom: 8px;
+      color: white;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .firm-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .firm-line input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      background: white;
+      color: var(--ink);
+      font: 700 18px Georgia, "Times New Roman", serif;
+    }
+
+    .firm-line span {
+      color: white;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .modal-button {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: white;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .choice-button {
+      min-height: 48px;
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--navy);
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: left;
+    }
+
+    .choice-button span {
+      display: block;
+      margin-top: 3px;
+      color: #cbd5e1;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .results {
+      margin: 14px 0;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .result-section {
+      margin: 10px 0 5px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 900;
+    }
+
+    .result-row,
+    .result-total {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 0;
+    }
+
+    .result-total {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 2px solid #cbd5e1;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .legal-document {
+      margin: 14px 0;
+      padding: 20px;
+      background: #fffdf7;
+      border: 1px solid #1f2937;
+      box-shadow: inset 0 0 0 1px #cbd5e1;
+      color: #111827;
+      text-align: left;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .legal-document h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .legal-document .memo-subtitle {
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #111827;
+      color: #475569;
+      font-size: 11px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .legal-document .result-row {
+      padding: 6px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .legal-document .result-row:last-child {
+      border-bottom: 0;
+      padding-top: 10px;
+      font-size: 15px;
+    }
+
+    .legal-document strong {
+      text-align: right;
+    }
+
+    .toast-wrap {
+      position: fixed;
+      top: 82px;
+      right: 10px;
+      z-index: 40;
+      display: grid;
+      gap: 8px;
+      width: min(320px, calc(100% - 20px));
+      pointer-events: none;
+    }
+
+    .toast,
+    .strike-banner,
+    .float-text {
+      color: white;
+      box-shadow: var(--shadow);
+      font-weight: 900;
+    }
+
+    .toast {
+      padding: 11px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .strike-banner {
+      position: fixed;
+      top: 31%;
+      left: 50%;
+      z-index: 45;
+      width: min(380px, calc(100% - 24px));
+      padding: 16px;
+      border: 4px solid #991b1b;
+      border-radius: 12px;
+      background: var(--red);
+      text-align: center;
+      transform: translateX(-50%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+    }
+
+    .strike-banner.show { opacity: 1; }
+
+    .float-text {
+      position: fixed;
+      z-index: 60;
+      pointer-events: none;
+      font-size: 24px;
+      text-shadow: 0 2px 6px rgba(0,0,0,.4);
+      animation: floatUp 1s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      from { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      to { opacity: 0; transform: translate(-50%, -44px) scale(1.08); }
+    }
+
+    @media (max-width: 360px) {
+      body { padding-top: 88px; }
+      .stats { gap: 4px; }
+      .stat { padding: 5px 4px; }
+      .upgrade-grid,
+      .case-picks { gap: 4px; }
+      .upgrade { min-height: 36px; padding: 4px 3px; }
+      .upgrade-column-title { font-size: 7px; }
+      .case-card { padding: 8px 5px; }
+    }
+  </style>
+</head>
+<body>
+  <audio id="theme-song" src="Song1.mp3" preload="auto" loop></audio>
+  <audio id="event-song" src="Song2.mp3" preload="auto"></audio>
+  <audio id="card-song" src="Song3.mp3" preload="auto" loop></audio>
+  <audio id="month-song" src="Song4.mp3" preload="auto" loop></audio>
+  <audio id="trial-song-5" src="Song5.mp3" preload="auto" loop></audio>
+  <audio id="trial-song-6" src="Song6.mp3" preload="auto" loop></audio>
+  <audio id="trial-song-7" src="Song7.mp3" preload="auto" loop></audio>
+
+  <header class="topbar" aria-label="Firm status">
+    <div class="stats">
+      <div id="firm-name-top" class="firm-name">Law Office of New Partner & Associates, P.L.L.C.</div>
+      <div class="stat">
+        <span class="label">Day</span>
+        <span id="day" class="value blue">1</span>
+      </div>
+      <div class="stat">
+        <span class="label">Balance</span>
+        <span id="money" class="value green">$0</span>
+      </div>
+      <div class="stat">
+        <span class="label">Rent</span>
+        <span id="rent" class="value red">$2,000</span>
+        <span class="subvalue">due in <b id="rent-days">29</b>d</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="intro-modal" class="modal open">
+    <section class="modal-card intro-card">
+      <h1 class="intro-title">I Am Lawyer</h1>
+      <div id="intro-art" aria-hidden="true"></div>
+      <p id="intro-copy" class="intro-text hidden">
+        Congratulations! You just got married, passed the bar, and made the perfectly reasonable decision to open your own law firm.
+        What could go wrong? Manage clients, cases, staff, bills, and if there's time, your bar license.
+      </p>
+      <div id="firm-entry" class="firm-entry hidden">
+        <label for="firm-name-input">Name Your Firm</label>
+        <div class="firm-line">
+          <input id="firm-name-input" type="text" maxlength="28" autocomplete="off" placeholder="Johnson">
+          <span>& Associates, P.L.L.C.</span>
+        </div>
+      </div>
+      <button id="intro-button" class="modal-button">Next</button>
+    </section>
+  </div>
+
+  <div id="divorce-modal" class="modal">
+    <section class="modal-card" style="border-top-color: var(--red)">
+      <div id="divorce-art" class="divorce-art" aria-hidden="true"></div>
+      <h2>You Got Divorced</h2>
+      <p>You spent too much time at the firm. The settlement costs 50% of your bank balance.</p>
+      <div class="results">
+        <div class="result-row"><span>Settlement</span><strong id="divorce-cost" class="red">$0</strong></div>
+      </div>
+      <button id="divorce-close" class="modal-button" style="background: var(--red)">Accept & Continue</button>
+    </section>
+  </div>
+
+  <div id="bankrupt-modal" class="modal">
+    <section class="modal-card" style="border-top-color: var(--red)">
+      <div id="bankrupt-memo" class="legal-document"></div>
+      <button id="reset-game" class="modal-button" style="background: var(--navy)">Reset and Try Again</button>
+    </section>
+  </div>
+
+  <div id="disbarred-modal" class="modal">
+    <section class="modal-card" style="border-top-color: var(--red)">
+      <div id="disbarred-memo" class="legal-document"></div>
+      <button id="reset-disbarred" class="modal-button" style="background: var(--navy)">Reset and Try Again</button>
+    </section>
+  </div>
+
+  <div id="ethics-modal" class="modal">
+    <section class="modal-card" style="border-top-color: var(--amber)">
+      <div id="ethics-art" class="ethics-art" aria-hidden="true"></div>
+      <div class="ethics-status" aria-label="Current firm snapshot">
+        <div class="stat">
+          <span class="label">Day</span>
+          <span id="ethics-day" class="value blue">1</span>
+        </div>
+        <div class="stat">
+          <span class="label">Balance</span>
+          <span id="ethics-money" class="value green">$0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Rent</span>
+          <span id="ethics-rent" class="value red">$0</span>
+        </div>
+      </div>
+      <div id="ethics-license" class="ethics-license">License: 0/10</div>
+      <h2 id="ethics-title">Ethics Issue</h2>
+      <p id="ethics-copy"></p>
+      <div class="choice-grid">
+        <button id="ethics-choice-a" class="choice-button"></button>
+        <button id="ethics-choice-b" class="choice-button"></button>
+      </div>
+    </section>
+  </div>
+
+  <div id="month-modal" class="modal">
+    <section class="modal-card" style="border-top-color: var(--purple)">
+      <h2>Month-End Summary</h2>
+      <div id="month-day-label" class="ethics-license">Day 30</div>
+      <p>Financials, verdicts, and rent.</p>
+      <div id="month-results" class="results"></div>
+      <button id="month-close" class="modal-button" style="background: var(--purple)">Start Next Month</button>
+    </section>
+  </div>
+
+  <div id="vanity-modal" class="modal">
+    <section class="modal-card" style="border-top-color: var(--amber)">
+      <h2>Vanity Remodeling</h2>
+      <p id="vanity-copy"></p>
+      <div class="results">
+        <div class="result-row"><span>Permanent Rent Increase</span><strong class="red">+$50,000</strong></div>
+      </div>
+      <button id="vanity-close" class="modal-button" style="background: var(--amber)">Resume Game</button>
+    </section>
+  </div>
+
+  <div id="strike-banner" class="strike-banner"></div>
+  <div id="toasts" class="toast-wrap" aria-live="polite"></div>
+
+  <main id="firm-view" class="view">
+    <section class="diorama" aria-label="Office diorama">
+      <div id="rooms" class="rooms"></div>
+    </section>
+
+    <section class="family">
+      <div class="tracker-row">
+        <span>Family Life Tracker</span>
+        <span class="family-status">
+          <span id="hours">0/50h</span>
+          <span id="strikes"></span>
+        </span>
+      </div>
+      <div class="tracker-row">
+        <span>Lose Bar License</span>
+        <span id="license-status" class="family-status red">0/10</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">Dashboard</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Person</th>
+            <th class="num">Num</th>
+            <th class="num">Rate</th>
+            <th class="num">Hrs</th>
+            <th class="num gross">Gross</th>
+            <th class="num">Synergy</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Upgrade Skills</h2>
+        <span id="capacity">Staff: 1/2</span>
+      </div>
+      <div id="upgrades" class="upgrade-grid"></div>
+    </section>
+
+    <button id="open-docket" class="action dark" style="width:100%; min-height:48px">
+      Case Docket
+      <span>View monthly litigation</span>
+    </button>
+  </main>
+
+  <main id="docket-view" class="view hidden">
+    <section class="docket-hero">
+      <h1>Monthly Cases</h1>
+      <p>Verdicts resolve at the end of Day 30. Win all three for a x3 case payout.</p>
+      <span id="prestige-status" class="prestige-line">Prestige</span>
+    </section>
+
+    <section class="panel">
+      <div class="docket-totals">
+        <div>
+          <span class="label">Total Won</span>
+          <strong id="cases-won" class="green">0</strong>
+        </div>
+        <div>
+          <span class="label">Total Lost</span>
+          <strong id="cases-lost" class="red">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>This Month's Docket</h2>
+        <span id="case-count">0/3</span>
+      </div>
+      <div id="case-slots" class="case-slots"></div>
+    </section>
+
+    <section id="case-picker" class="case-picks" aria-label="Select next case">
+      <button id="pick-safe" class="case-card"></button>
+      <button id="pick-hard" class="case-card"></button>
+      <button id="reroll" class="case-card"></button>
+    </section>
+
+    <section id="trial-select-panel" class="panel hidden">
+      <div class="panel-title">Trial Case</div>
+      <div style="padding:10px">
+        <div id="trial-selected-note" class="hidden"></div>
+        <div id="trial-options" class="trial-picks"></div>
+      </div>
+    </section>
+  </main>
+
+  <main id="trial-view" class="view trial-screen hidden">
+    <section id="trial-setup" class="trial-setup">
+      <div class="trial-folder-title">Trial Budget</div>
+      <div class="courtroom-mini" aria-hidden="true"></div>
+      <div id="trial-preview"></div>
+      <div class="firm-line" style="margin-top:10px">
+        <input id="trial-budget-input" type="number" min="0" step="1000" value="0">
+        <button id="trial-start" class="modal-button" style="min-height:44px">Start Trial</button>
+      </div>
+      <button id="trial-settle" class="modal-button" style="margin-top:8px; background: var(--green)"></button>
+    </section>
+
+    <section id="trial-combat" class="hidden">
+      <div class="trial-arena">
+        <div id="trial-player-side" class="trial-side">
+          <div id="trial-player-art"></div>
+          <div class="hp-wrap">
+            <span>Credibility <b id="trial-credibility-text">100/100</b></span>
+            <div class="hp-bar"><div id="trial-credibility-fill" class="hp-fill"></div></div>
+          </div>
+        </div>
+        <div id="trial-enemy-side" class="trial-side">
+          <div id="trial-enemy-art" class="rival-attorney" aria-hidden="true"></div>
+          <div class="hp-wrap">
+            <span>Rival Credibility <b id="trial-enemy-hp-text">100/100</b></span>
+            <div class="hp-bar"><div id="trial-enemy-hp-fill" class="hp-fill"></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="trial-flair" class="trial-flair"></div>
+      <div id="trial-intent" class="intent-box"></div>
+      <div id="trial-resources" class="trial-resource-bar"></div>
+      <div class="trial-extra-actions">
+        <button id="trial-extra-one" class="trial-action"></button>
+        <button id="trial-extra-two" class="trial-action"></button>
+      </div>
+      <div class="trial-actions">
+        <button id="trial-basic-attack" class="trial-action"></button>
+        <button id="trial-basic-defend" class="trial-action"></button>
+        <button id="trial-hard-attack" class="trial-action"></button>
+        <button id="trial-hard-defend" class="trial-action"></button>
+      </div>
+    </section>
+  </main>
+
+  <footer id="firm-footer" class="footer">
+    <div class="footer-inner">
+      <button id="work-one" class="action primary"></button>
+      <button id="work-seven" class="action grind"></button>
+      <button id="rest-one" class="action rest"></button>
+    </div>
+  </footer>
+
+  <footer id="docket-footer" class="footer hidden">
+    <div class="footer-inner single">
+      <button id="return-firm" class="action dark"></button>
+    </div>
+  </footer>
+
+  <footer id="trial-footer" class="footer hidden">
+    <div class="footer-inner single">
+      <button id="trial-exit" class="action dark">Return to Firm</button>
+    </div>
+  </footer>
+
+  <script>
+    const START_STATE = {
+      firmName: "Law Office of New Partner & Associates, P.L.L.C.",
+      day: 1,
+      money: 0,
+      totalMade: 0,
+      totalSpent: 0,
+      rate: 100,
+      hours: 3,
+      levelRate: 0,
+      levelHours: 0,
+      paralegals: 0,
+      paraRate: 40,
+      paraHours: 4,
+      levelParaRate: 0,
+      levelParaHours: 0,
+      paraCost: 200,
+      associates: 0,
+      assocRate: 50,
+      assocHours: 4,
+      levelAssocRate: 0,
+      levelAssocHours: 0,
+      assocCost: 500,
+      capacity: 2,
+      expandCost: 10000,
+      vanityRent: 0,
+      rentDue: 2000,
+      consecutiveHours: 0,
+      strikes: 0,
+      licenseMarks: 0,
+      divorced: false,
+      bankrupt: false,
+      disbarred: false,
+      unlockedGrind: false,
+      monthlyGross: 0,
+      monthlyOverhead: 0,
+      monthlyEthicsEvents: 0,
+      expandedThisMonth: false,
+      pendingVanityNotice: false,
+      pendingVanityStory: "",
+      docket: {
+        won: 0,
+        lost: 0,
+        selected: [],
+        needed: 3,
+        rerollCost: 1000,
+        draft: null
+      },
+      trial: {
+        options: [],
+        selected: null,
+        pending: false,
+        active: false,
+        complete: false,
+        budget: 0,
+        spent: 0,
+        settlement: null,
+        credibility: 100,
+        shield: 0,
+        enemyHp: 0,
+        enemyMaxHp: 0,
+        enemyShield: 0,
+        intent: null,
+        firmHours: 0,
+        turn: 1,
+        actionPoints: 1,
+        extraMovesBought: 0,
+        result: "",
+        currentCost: null
+      }
+    };
+
+    let state = structuredClone(START_STATE);
+    let introStep = 0;
+    let pendingEthicsEvent = null;
+
+    const VANITY_STORIES = [
+      "You decided the reception area needed imported marble floors, even though most clients only see it for eight minutes.",
+      "You replaced every perfectly good chair with Italian leather seating because the old chairs did not say 'future rainmaker.'",
+      "You commissioned a giant abstract painting for the conference room and called it a client development expense.",
+      "You installed a glass-walled partner office so everyone can watch you look busy.",
+      "You upgraded the coffee bar to a full espresso station with brass fixtures and a consultant who used the word 'mouthfeel.'",
+      "You ordered custom mahogany desks because regular desks were apparently hostile to justice.",
+      "You added a decorative water feature near reception. It sounds expensive because it is.",
+      "You hired a lighting designer to make the lobby feel more like a boutique hotel than a place where invoices happen.",
+      "You replaced the office sign with backlit brushed metal letters visible from a hallway nobody uses.",
+      "You bought a wall of fake law books for atmosphere, then paid extra to make them look old."
+    ];
+
+    const TRIAL_FLAIR_LINES = [
+      "Me: I stand ready.",
+      "Me: The record is clear.",
+      "Me: I have no further doubts.",
+      "Me: Your argument is out of order.",
+      "Me: I move to end this.",
+      "Me: The facts will carry the day.",
+      "Me: I came prepared for war.",
+      "Me: I will not be overruled.",
+      "Me: You mistake volume for merit.",
+      "Me: The law is on my side.",
+      "Me: I know where this record leads.",
+      "Me: Your objection is noted—and denied.",
+      "Me: This courtroom has seen worse than you.",
+      "Me: I have one more exhibit.",
+      "Me: I do not fold under pressure.",
+      "Me: The truth survives cross-examination.",
+      "Me: I will make my record.",
+      "Me: You opened the door.",
+      "Me: This is where your theory breaks.",
+      "Me: Just one more question!",
+      "Rival: You are out of your depth.",
+      "Rival: I have already won.",
+      "Rival: The court will see through you.",
+      "Rival: Your case is collapsing.",
+      "Rival: I object to everything.",
+      "Rival: You brought hope to a rules fight.",
+      "Rival: The record does not forgive.",
+      "Rival: Your witness is mine now.",
+      "Rival: I know the local rules.",
+      "Rival: This is basic procedure.",
+      "Rival: You should have settled.",
+      "Rival: Your argument has no foundation.",
+      "Rival: I move to strike your confidence.",
+      "Rival: You are one ruling away from ruin.",
+      "Rival: I have precedent and patience.",
+      "Rival: The burden will bury you.",
+      "Rival: I saved my best objection.",
+      "Rival: Your case dies on cross.",
+      "Rival: The court has heard enough.",
+      "Rival: This was never a close call."
+    ];
+
+    const ETHICS_EVENTS = [
+      {
+        title: "Trust Account Audit",
+        copy: "A client retainer deposit landed in the operating account. Nobody noticed except the bank, the client, and now the bar.",
+        choices: [
+          { label: "Hire Ethics Counsel", note: "Fee: 25% of current income", moneyPct: -0.25, license: 0 },
+          { label: "Fix It Quietly", note: "+2 ethics points", moneyPct: 0, license: 2 }
+        ]
+      },
+      {
+        title: "Angry Client Complaint",
+        copy: "A client says you missed too many calls and is threatening to file a grievance before lunch.",
+        choices: [
+          { label: "Refund and Apologize", note: "Expense: 10% of current income", moneyPct: -0.1, license: 0 },
+          { label: "Ignore the Email", note: "+1 ethics point", moneyPct: 0, license: 1 }
+        ]
+      },
+      {
+        title: "Deadline Problem",
+        copy: "A filing deadline looks less filed than your calendar promised. The clerk is waiting.",
+        choices: [
+          { label: "Self-Report Mistake", note: "Expense: 10% of current income, +1 ethics point", moneyPct: -0.1, license: 1 },
+          { label: "Backdate the Memo", note: "+3 ethics points", moneyPct: 0, license: 3 }
+        ]
+      },
+      {
+        title: "Confidential Shortcut",
+        copy: "A client offers a cash bonus if you use information that definitely did not arrive through proper channels.",
+        choices: [
+          { label: "Refuse the Shortcut", note: "No payout, no ethics points", moneyPct: 0, license: 0 },
+          { label: "Take the Bonus", note: "Receipt: 10% of current income, +2 ethics points", moneyPct: 0.1, license: 2 }
+        ]
+      },
+      {
+        title: "Courtroom Temper",
+        copy: "Opposing counsel objects one time too many. The judge is watching your face very closely.",
+        choices: [
+          { label: "Take the Warning", note: "CLE coach fee: 10% of current income", moneyPct: -0.1, license: 0 },
+          { label: "Make a Scene", note: "+1 ethics point", moneyPct: 0, license: 1 }
+        ]
+      },
+      {
+        title: "Take a CLE",
+        copy: "A last-minute continuing legal education seminar has one open seat. It is dull, useful, and surprisingly good for your license.",
+        choices: [
+          { label: "Take the CLE", note: "Expense: 10% of current income, remove 1 ethics point", moneyPct: -0.1, license: -1 },
+          { label: "Skip It", note: "No change", moneyPct: 0, license: 0 }
+        ]
+      },
+      {
+        title: "Big Case Break",
+        copy: "A major client wants an aggressive emergency filing. Winning would be huge. Losing discipline would be worse.",
+        choices: [
+          { label: "Win It Clean", note: "Receipt: 50% of current income", moneyPct: 0.5, license: 0 },
+          { label: "Win It Dirty", note: "Receipt: 100% of current income, +5 ethics points", moneyPct: 1, license: 5 }
+        ]
+      },
+      {
+        title: "Big Loss",
+        copy: "A nightmare ruling just landed. You can pay to contain the damage, or let the bar hear about every ugly detail.",
+        choices: [
+          { label: "Absorb the Loss", note: "Expense: 50% of current income", moneyPct: -0.5, license: 0 },
+          { label: "Hide the Damage", note: "+5 ethics points", moneyPct: 0, license: 5 }
+        ]
+      },
+      {
+        title: "Referral Fee Question",
+        copy: "Another attorney sends you a client and asks for a referral fee before anyone signs the proper paperwork.",
+        choices: [
+          { label: "Paper It Correctly", note: "Expense: 10% of current income", moneyPct: -0.1, license: 0 },
+          { label: "Pay Under the Table", note: "+2 ethics points", moneyPct: 0, license: 2 }
+        ]
+      },
+      {
+        title: "Client Windfall",
+        copy: "A grateful client offers a bonus after a clean settlement and asks for nothing strange in return.",
+        choices: [
+          { label: "Accept the Bonus", note: "Receipt: 10% of current income", moneyPct: 0.1, license: 0 },
+          { label: "Waive It for Goodwill", note: "Remove 1 ethics point", moneyPct: 0, license: -1 }
+        ]
+      },
+      {
+        title: "Billing Review",
+        copy: "Your invoice has some suspiciously round hours. The client wants an explanation before paying.",
+        choices: [
+          { label: "Write Down the Bill", note: "Expense: 25% of current income", moneyPct: -0.25, license: 0 },
+          { label: "Stand by Every Minute", note: "+2 ethics points", moneyPct: 0, license: 2 }
+        ]
+      },
+      {
+        title: "Emergency Filing",
+        copy: "A messy emergency filing can save a client today, but only if you spend heavily on support.",
+        choices: [
+          { label: "Fund the Filing", note: "Expense: 25% of current income", moneyPct: -0.25, license: 0 },
+          { label: "File It Thin", note: "+3 ethics points", moneyPct: 0, license: 3 }
+        ]
+      },
+      {
+        title: "Pro Bono Spotlight",
+        copy: "A local reporter wants to cover your pro bono work. It could help the firm if you keep it tasteful.",
+        choices: [
+          { label: "Keep It Professional", note: "Receipt: 10% of current income", moneyPct: 0.1, license: 0 },
+          { label: "Exploit the Client Story", note: "Receipt: 25% of current income, +3 ethics points", moneyPct: 0.25, license: 3 }
+        ]
+      }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const money = (value) => `${value < 0 ? "-" : ""}$${Math.abs(Math.round(value)).toLocaleString()}`;
+    const signedMoney = (value) => `${value > 0 ? "+" : ""}${money(value)}`;
+    const staffCount = () => 1 + state.paralegals + state.associates;
+    const overhead = () => state.paralegals * state.paraCost + state.associates * state.assocCost;
+    const paraGross = () => state.paralegals * state.paraRate * state.paraHours;
+    const assocGross = () => state.associates * state.assocRate * state.assocHours;
+    const hiredStaff = () => state.paralegals + state.associates;
+    const hasPrestige = () => state.docket.won >= state.docket.lost;
+    const currentRent = () => state.rentDue;
+    const rentAfterExpansion = () => state.expandCost + state.vanityRent;
+
+    function attorneyGross() {
+      const paraSynergy = state.paralegals * 10 + Math.min(state.paralegals, state.associates) * 50;
+      const associateSynergy = state.associates * 20;
+      return Math.floor(state.rate * state.hours * (1 + (paraSynergy + associateSynergy) / 100));
+    }
+
+    function dailyNet(worked = true) {
+      return (worked ? attorneyGross() : 0) + paraGross() + assocGross() - overhead();
+    }
+
+    function earn(amount) {
+      const value = Math.max(0, Math.round(amount));
+      state.money += value;
+      state.totalMade += value;
+    }
+
+    function spend(amount) {
+      const value = Math.max(0, Math.round(amount));
+      state.money -= value;
+      state.totalSpent += value;
+    }
+
+    function applyMoneyChange(amount) {
+      if (amount >= 0) earn(amount);
+      else spend(Math.abs(amount));
+    }
+
+    function payoutCapacityFactor() {
+      const staff = hiredStaff();
+      if (staff <= 16) return Math.min(1, 0.2 + staff * 0.05);
+      return 1 + (staff - 16) * 0.01;
+    }
+
+    function reputationFactor() {
+      return hasPrestige() ? 1 : 0.5;
+    }
+
+    function casePayout(basePayout) {
+      return Math.max(1, Math.floor(basePayout * payoutCapacityFactor() * reputationFactor()));
+    }
+
+    function boostedProbability(baseProbability) {
+      const staffBonus = 12 * (1 - Math.exp(-hiredStaff() / 8));
+      return Math.min(99, baseProbability + staffBonus);
+    }
+
+    function cappedProbability(baseProbability, cap) {
+      return Math.min(cap, Math.round(boostedProbability(baseProbability)));
+    }
+
+    function generateDraft() {
+      const gross = Math.max(9000, (attorneyGross() + paraGross() + assocGross()) * 30);
+      const variant = () => 0.67 + Math.random() * 0.66;
+      const safeBasePay = gross * 0.5 * variant() * 0.2;
+      const hardBasePay = gross * 2 * variant() * 0.5;
+
+      state.docket.draft = {
+        safe: {
+          type: "Safe Bet",
+          pay: casePayout(safeBasePay),
+          prob: cappedProbability(60 + Math.floor(Math.random() * 16), 90)
+        },
+        hard: {
+          type: "High Risk",
+          pay: casePayout(hardBasePay),
+          prob: cappedProbability(45 + Math.floor(Math.random() * 18), 70)
+        }
+      };
+    }
+
+    function firmPowerScore() {
+      return Math.sqrt(Math.max(100, attorneyGross() + paraGross() + assocGross()));
+    }
+
+    function generateTrialOptions() {
+      const names = ["Contract Dispute", "Injury Trial", "Corporate Fraud", "Federal Jury Trial", "Trade Secret Fight"];
+      state.trial.options = [0, 1].map(() => {
+        const difficulty = 1 + Math.floor(Math.random() * 5);
+        const power = firmPowerScore();
+        const hp = Math.round(70 + difficulty * 20 + power * 1.2);
+        const attack = Math.round(7 + difficulty * 3 + power * 0.12);
+        const defense = Math.round(5 + difficulty * 2 + power * 0.08);
+        const heal = Math.min(Math.round(6 + difficulty * 2 + power * 0.08), Math.round(hp * 0.12));
+        const budget = Math.ceil((hp * difficulty * 35) / 1000) * 1000;
+        const reward = Math.ceil((budget * (2.5 + difficulty * 0.4)) / 1000) * 1000;
+        const settlementRoll = Math.floor(Math.random() * 4);
+        const settlementPct = [-0.5, -0.05, 0.05, 0.2][settlementRoll];
+        return {
+          name: names[Math.floor(Math.random() * names.length)],
+          difficulty,
+          hp,
+          attack,
+          defense,
+          heal,
+          budget,
+          reward,
+          settlement: {
+            pct: settlementPct,
+            amount: Math.round(reward * settlementPct)
+          }
+        };
+      });
+    }
+
+    function selectTrialCase(index) {
+      state.trial.selected = state.trial.options[index];
+      state.trial.pending = true;
+      render();
+    }
+
+    function showToast(message, tone = "warning") {
+      const colors = { success: "var(--green)", warning: "var(--amber)", danger: "var(--red)" };
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.style.background = colors[tone] || colors.warning;
+      toast.textContent = message;
+      $("toasts").appendChild(toast);
+      setTimeout(() => toast.remove(), 3200);
+    }
+
+    function floatText(target, text, positive) {
+      if (!target) return;
+      const box = target.getBoundingClientRect();
+      const node = document.createElement("div");
+      node.className = "float-text";
+      node.style.color = positive ? "#34d399" : "#fb7185";
+      node.style.left = `${box.left + box.width / 2 + (Math.random() - .5) * 28}px`;
+      node.style.top = `${box.top}px`;
+      node.textContent = text;
+      document.body.appendChild(node);
+      setTimeout(() => node.remove(), 1100);
+    }
+
+    function showStrike() {
+      const banner = $("strike-banner");
+      banner.innerHTML = `Strike Added (${state.strikes}/3)<br><small>Rest soon or your marriage pays the bill.</small>`;
+      banner.classList.add("show");
+      setTimeout(() => banner.classList.remove("show"), 4400);
+    }
+
+    function addLicenseMarks(amount) {
+      state.licenseMarks = Math.max(0, Math.min(10, state.licenseMarks + amount));
+      if (state.licenseMarks >= 10) {
+        state.disbarred = true;
+        renderDissolutionMemo("disbarred-memo", "Disbarment by Bar Card Revocation");
+        playEventSong(true);
+        $("disbarred-modal").classList.add("open");
+      }
+    }
+
+    function incomeBase() {
+      return Math.max(1000, Math.abs(state.money), attorneyGross() + paraGross() + assocGross());
+    }
+
+    function resolveChoiceMoney(choice) {
+      return Math.round(incomeBase() * (choice.moneyPct || 0));
+    }
+
+    function maybeShowEthicsEvent(chances = 1) {
+      if (state.bankrupt || state.disbarred || $("month-modal").classList.contains("open")) return;
+      const monthlyOdds = [35, 50, 100];
+      if (state.monthlyEthicsEvents >= monthlyOdds.length) return;
+
+      let triggered = false;
+      for (let i = 0; i < chances; i += 1) {
+        if (state.monthlyEthicsEvents >= monthlyOdds.length) break;
+        if (Math.random() < 1 / monthlyOdds[state.monthlyEthicsEvents]) {
+          triggered = true;
+          break;
+        }
+      }
+
+      if (!triggered) return;
+
+      pendingEthicsEvent = ETHICS_EVENTS[Math.floor(Math.random() * ETHICS_EVENTS.length)];
+      state.monthlyEthicsEvents += 1;
+      $("ethics-art").innerHTML = personSvg("attorney");
+      $("ethics-day").textContent = state.day;
+      $("ethics-money").textContent = money(state.money);
+      $("ethics-money").className = `value ${state.money >= 0 ? "green" : "red"}`;
+      $("ethics-rent").textContent = money(state.rentDue);
+      $("ethics-license").textContent = `Current License Meter: ${state.licenseMarks}/10`;
+      $("ethics-title").textContent = pendingEthicsEvent.title;
+      $("ethics-copy").textContent = pendingEthicsEvent.copy;
+      renderEthicsChoice("ethics-choice-a", pendingEthicsEvent.choices[0]);
+      renderEthicsChoice("ethics-choice-b", pendingEthicsEvent.choices[1]);
+      playCardSong();
+      $("ethics-modal").classList.add("open");
+      return true;
+    }
+
+    function renderEthicsChoice(id, choice) {
+      const amount = resolveChoiceMoney(choice);
+      const amountNote = amount ? ` (${amount > 0 ? "+" : ""}${money(amount)})` : "";
+      $(id).innerHTML = `${choice.label}<span>${choice.note}${amountNote}</span>`;
+    }
+
+    function chooseEthics(index) {
+      if (!pendingEthicsEvent) return;
+      const choice = pendingEthicsEvent.choices[index];
+      const amount = resolveChoiceMoney(choice);
+      applyMoneyChange(amount);
+      addLicenseMarks(choice.license);
+      pendingEthicsEvent = null;
+      stopCardSong();
+      $("ethics-modal").classList.remove("open");
+
+      const moneyText = amount ? `${amount > 0 ? "+" : ""}${money(amount)}` : "No cash change";
+      const licenseText = choice.license
+        ? `, ${choice.license > 0 ? "+" : ""}${choice.license} ethics`
+        : "";
+      showToast(`${moneyText}${licenseText}`, choice.license > 0 ? "danger" : "success");
+      render();
+    }
+
+    function switchView(view) {
+      const docket = view === "docket";
+      if (!docket && state.docket.needed > 0) {
+        showToast(`Select ${state.docket.needed} more case${state.docket.needed > 1 ? "s" : ""} first.`);
+        return;
+      }
+      if (!docket && state.day >= 31 && !state.trial.pending && !state.trial.complete) {
+        showToast("Select a trial case for this month.");
+        return;
+      }
+
+      $("firm-view").classList.toggle("hidden", docket);
+      $("firm-footer").classList.toggle("hidden", docket);
+      $("docket-view").classList.toggle("hidden", !docket);
+      $("docket-footer").classList.toggle("hidden", !docket);
+      $("trial-view").classList.add("hidden");
+      $("trial-footer").classList.add("hidden");
+      render();
+    }
+
+    function selectCase(type) {
+      if (state.docket.needed <= 0) return;
+      if (!state.docket.draft) generateDraft();
+
+      state.docket.selected.push({ ...state.docket.draft[type] });
+      state.docket.needed -= 1;
+      if (state.docket.needed > 0) generateDraft();
+      render();
+    }
+
+    function rerollDraft() {
+      if (state.docket.needed <= 0) return;
+      if (state.money < state.docket.rerollCost) {
+        showToast(`Reroll costs ${money(state.docket.rerollCost)}.`);
+        return;
+      }
+      spend(state.docket.rerollCost);
+      state.docket.rerollCost *= 2;
+      generateDraft();
+      render();
+    }
+
+    function tryUpgrade(code) {
+      const buy = (cost, apply) => {
+        if (state.money < cost) return false;
+        spend(cost);
+        apply();
+        return true;
+      };
+
+      const upgrades = {
+        rate: () => buy(1000 * 2 ** state.levelRate, () => { state.rate += 100; state.levelRate += 1; }),
+        hours: () => state.hours < 10 && buy(1000 * 2 ** state.levelHours, () => { state.hours += 1; state.levelHours += 1; }),
+        hirePara: () => staffCount() < state.capacity && buy(4000, () => { state.paralegals += 1; }),
+        paraRate: () => state.paralegals > 0 && buy(1000 * 2 ** state.levelParaRate, () => { state.paraRate += 10; state.levelParaRate += 1; }),
+        paraHours: () => state.paralegals > 0 && state.paraHours < 8 && buy(1000 * 2 ** state.levelParaHours, () => { state.paraHours += 1; state.levelParaHours += 1; }),
+        hireAssoc: () => staffCount() < state.capacity && buy(10000, () => { state.associates += 1; }),
+        assocRate: () => state.associates > 0 && buy(2000 * 2 ** state.levelAssocRate, () => { state.assocRate += 50; state.levelAssocRate += 1; }),
+        assocHours: () => state.associates > 0 && state.assocHours < 12 && buy(2000 * 2 ** state.levelAssocHours, () => { state.assocHours += 1; state.levelAssocHours += 1; }),
+        expand: () => buy(state.expandCost, () => {
+          state.capacity += 2;
+          state.rentDue = rentAfterExpansion();
+          state.expandCost *= 2;
+          state.expandedThisMonth = true;
+        })
+      };
+
+      upgrades[code]?.();
+      render();
+    }
+
+    function advanceDays(worked, count, event) {
+      if (state.bankrupt || state.disbarred) return;
+      let total = 0;
+      let daysAdvanced = 0;
+
+      for (let i = 0; i < count; i += 1) {
+        const gross = (worked ? attorneyGross() : 0) + paraGross() + assocGross();
+        const net = gross - overhead();
+
+        state.money += net;
+        state.totalMade += Math.max(0, gross);
+        state.totalSpent += Math.max(0, overhead());
+        state.monthlyGross += gross;
+        state.monthlyOverhead += overhead();
+        total += net;
+        daysAdvanced += 1;
+
+        if (worked && !state.divorced) {
+          state.consecutiveHours += state.hours;
+            if (state.consecutiveHours >= 50) {
+            state.consecutiveHours = 0;
+            state.strikes += 1;
+
+            if (state.strikes >= 3) {
+              state.divorced = true;
+              const cost = Math.max(0, Math.floor(state.money / 2));
+              spend(cost);
+              $("divorce-art").innerHTML = `<span class="broken-heart">💔</span><span class="broken-heart">💔</span><span class="broken-heart">💔</span>${personSvg("attorney")}`;
+              $("divorce-cost").textContent = money(cost);
+              playEventSong(false);
+              $("divorce-modal").classList.add("open");
+              break;
+            }
+
+            showStrike();
+          }
+        } else if (!worked && !state.divorced) {
+          state.consecutiveHours = 0;
+        }
+
+        if (state.day % 30 === 0) {
+          processMonthEnd();
+          state.day += 1;
+          break;
+        }
+
+        state.day += 1;
+      }
+
+      if (total !== 0) floatText(event?.currentTarget, signedMoney(total), total >= 0);
+      render();
+      maybeShowEthicsEvent(daysAdvanced);
+    }
+
+    function processMonthEnd() {
+      let caseProfit = 0;
+      let winsThisMonth = 0;
+      const rows = [];
+
+      rows.push(`<div class="result-section">Firm Operations</div>`);
+      rows.push(row("Billable Revenue", `+${money(state.monthlyGross)}`, "green"));
+      rows.push(row("Staff Overhead", `-${money(state.monthlyOverhead)}`, "red"));
+      rows.push(`<div class="result-section">Litigation Verdicts</div>`);
+
+      state.docket.selected.forEach((caseItem, index) => {
+        const won = Math.random() * 100 <= caseItem.prob;
+        if (won) {
+          state.docket.won += 1;
+          winsThisMonth += 1;
+          earn(caseItem.pay);
+          caseProfit += caseItem.pay;
+          rows.push(row(`Case ${index + 1} (${caseItem.type})`, `+${money(caseItem.pay)}`, "green"));
+        } else {
+          state.docket.lost += 1;
+          rows.push(row(`Case ${index + 1} (${caseItem.type})`, "LOST", "red"));
+        }
+      });
+
+      if (winsThisMonth === 3) {
+        const bonus = caseProfit * 2;
+        earn(bonus);
+        caseProfit += bonus;
+        rows.push(row("Perfect Month Bonus (x3)", `+${money(bonus)}`, "green"));
+      }
+
+      rows.push(`<div class="result-section">Facilities</div>`);
+      const rentCharged = state.rentDue;
+      if (state.money >= rentCharged) {
+        spend(rentCharged);
+        rows.push(row("Office Rent", `-${money(rentCharged)}`, "red"));
+      } else {
+        state.bankrupt = true;
+        rows.push(row("Office Rent", "FAILED TO PAY", "red"));
+      }
+
+      if (!state.bankrupt && !state.expandedThisMonth) {
+        state.vanityRent += 50000;
+        state.rentDue += 50000;
+        state.pendingVanityNotice = true;
+        state.pendingVanityStory = VANITY_STORIES[Math.floor(Math.random() * VANITY_STORIES.length)];
+      }
+
+      const netMonth = state.monthlyGross - state.monthlyOverhead + caseProfit - (state.bankrupt ? 0 : rentCharged);
+      rows.push(`<div class="result-total"><span>Net 30-Day Change</span><strong class="${netMonth >= 0 ? "green" : "red"}">${netMonth >= 0 ? "+" : ""}${money(netMonth)}</strong></div>`);
+
+      $("month-day-label").textContent = `Day ${state.day}`;
+      $("month-results").innerHTML = rows.join("");
+      state.monthlyGross = 0;
+      state.monthlyOverhead = 0;
+      state.monthlyEthicsEvents = 0;
+      state.expandedThisMonth = false;
+      state.docket.selected = [];
+      state.docket.needed = 3;
+      state.docket.rerollCost = 1000;
+      state.docket.draft = null;
+      playMonthSong();
+      $("month-modal").classList.add("open");
+    }
+
+    function row(label, value, tone) {
+      return `<div class="result-row"><span>${label}</span><strong class="${tone}">${value}</strong></div>`;
+    }
+
+    function legalRow(label, value) {
+      return `<div class="result-row"><span>${label}</span><strong>${value}</strong></div>`;
+    }
+
+    function renderDissolutionMemo(targetId, cause) {
+      const marriage = state.divorced ? "Divorced" : "Married";
+      const barStatus = state.disbarred ? "Disbarred" : "Active";
+      const profit = state.totalMade - state.totalSpent;
+      const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+      $(targetId).innerHTML = `
+        <h2>Law Firm Dissolution Memo</h2>
+        <div class="memo-subtitle">Final administrative filing</div>
+        ${legalRow("Today's Date", today)}
+        ${legalRow("Name of Firm", state.firmName)}
+        ${legalRow("Days in Operation", state.day)}
+        ${legalRow("Number of Employees", staffCount())}
+        ${legalRow("Cases Won", state.docket.won)}
+        ${legalRow("Cases Lost", state.docket.lost)}
+        ${legalRow("Cause of Dissolution", cause)}
+        ${legalRow("Partner Marriage Status", marriage)}
+        ${legalRow("Status of Bar Card", barStatus)}
+        ${legalRow("Revenue", money(state.totalMade))}
+        ${legalRow("Expenses Incurred", money(state.totalSpent))}
+        ${legalRow("Profit", `${profit >= 0 ? "" : "-"}${money(Math.abs(profit))}`)}
+      `;
+    }
+
+    function closeMonth() {
+      stopMonthSong();
+      $("month-modal").classList.remove("open");
+      if (state.bankrupt) {
+        renderDissolutionMemo("bankrupt-memo", "Failure to Pay Office Rent");
+        playEventSong(true);
+        $("bankrupt-modal").classList.add("open");
+        return;
+      }
+      if (state.pendingVanityNotice) {
+        showVanityNotice();
+        return;
+      }
+      continueAfterMonth();
+    }
+
+    function showVanityNotice() {
+      $("vanity-copy").textContent = `Last month you passed on expanding the office space, so you treated yourself to the following questionable purchase instead: ${state.pendingVanityStory} It now costs you $50,000 more in rent every month.`;
+      playThemeSong();
+      $("vanity-modal").classList.add("open");
+    }
+
+    function closeVanityNotice() {
+      stopThemeSong();
+      $("vanity-modal").classList.remove("open");
+      state.pendingVanityNotice = false;
+      state.pendingVanityStory = "";
+      continueAfterMonth();
+    }
+
+    function continueAfterMonth() {
+      if (state.trial.pending && !state.trial.complete) {
+        openTrial();
+        return;
+      }
+      generateDraft();
+      switchView("docket");
+    }
+
+    function openTrial() {
+      $("firm-view").classList.add("hidden");
+      $("firm-footer").classList.add("hidden");
+      $("docket-view").classList.add("hidden");
+      $("docket-footer").classList.add("hidden");
+      $("trial-view").classList.remove("hidden");
+      $("trial-footer").classList.remove("hidden");
+      playRandomTrialSong();
+      prepareTrialSetup();
+    }
+
+    function prepareTrialSetup() {
+      const t = state.trial.selected;
+      $("trial-setup").classList.remove("hidden");
+      $("trial-combat").classList.add("hidden");
+      $("trial-exit").disabled = true;
+      $("trial-player-art").innerHTML = personSvg("attorney");
+      $("trial-enemy-art").innerHTML = personSvg("attorney");
+      $("trial-budget-input").max = Math.max(0, state.money);
+      $("trial-budget-input").value = Math.min(state.money, t.budget);
+      $("trial-preview").innerHTML = `
+        <div class="result-row"><span>${t.name}</span><strong>Difficulty ${t.difficulty}/5</strong></div>
+        <div class="result-row"><span>Enemy HP</span><strong>${t.hp}</strong></div>
+        <div class="result-row"><span>Attack / Defense / Heal</span><strong>${t.attack} / ${t.defense} / ${t.heal}</strong></div>
+        <div class="result-row"><span>Suggested Budget</span><strong>${money(t.budget)}</strong></div>
+        <div class="result-row"><span>Win Reward</span><strong class="green">${money(t.reward)}</strong></div>
+      `;
+      $("trial-settle").textContent = `Settle Case for ${t.settlement.amount >= 0 ? "+" : "-"}${money(Math.abs(t.settlement.amount))}`;
+    }
+
+    function resetTrialState() {
+      state.trial = {
+        options: [],
+        selected: null,
+        pending: false,
+        active: false,
+        complete: false,
+        budget: 0,
+        spent: 0,
+        settlement: null,
+        credibility: 100,
+        shield: 0,
+        enemyHp: 0,
+        enemyMaxHp: 0,
+        enemyShield: 0,
+        intent: null,
+        firmHours: 0,
+        turn: 1,
+        actionPoints: 1,
+        extraMovesBought: 0,
+        result: "",
+        currentCost: null
+      };
+    }
+
+    function settleTrial() {
+      const t = state.trial.selected;
+      if (!t || state.trial.active) return;
+      applyMoneyChange(t.settlement.amount);
+      stopTrialSongs();
+      showToast(`Case settled: ${t.settlement.amount >= 0 ? "+" : "-"}${money(Math.abs(t.settlement.amount))}`, t.settlement.amount >= 0 ? "success" : "danger");
+      resetTrialState();
+      generateDraft();
+      switchView("docket");
+    }
+
+    function startTrial() {
+      const t = state.trial.selected;
+      const requested = Math.max(0, Math.floor(Number($("trial-budget-input").value) || 0));
+      state.trial.budget = Math.min(requested, Math.max(0, state.money));
+      state.trial.spent = 0;
+      state.trial.credibility = 100;
+      state.trial.shield = 0;
+      state.trial.enemyHp = t.hp;
+      state.trial.enemyMaxHp = t.hp;
+      state.trial.enemyShield = 0;
+      state.trial.settlement = t.settlement;
+      state.trial.firmHours = (state.hours * 5) + (state.paralegals * state.paraHours * 5) + (state.associates * state.assocHours * 5);
+      state.trial.turn = 1;
+      state.trial.actionPoints = 1;
+      state.trial.extraMovesBought = 0;
+      state.trial.result = "";
+      state.trial.flair = randomTrialFlair();
+      state.trial.active = true;
+      state.trial.currentCost = trialHardCost();
+      state.trial.currentAttackName = randomHardAttackName();
+      $("trial-setup").classList.add("hidden");
+      $("trial-combat").classList.remove("hidden");
+      rollTrialIntent();
+      renderTrial();
+    }
+
+    function resetTrialActionsForTurn() {
+      state.trial.actionPoints = 1;
+      state.trial.extraMovesBought = 0;
+    }
+
+    function buyTrialExtraMoves(count) {
+      const cost = count === 1 ? 10 : 24;
+      if (!state.trial.active || state.trial.extraMovesBought > 0) return;
+      if (state.trial.firmHours < cost) {
+        showToast("Not enough Firm Hours.", "danger");
+        return;
+      }
+      state.trial.firmHours -= cost;
+      state.trial.actionPoints += count;
+      state.trial.extraMovesBought = count;
+      renderTrial();
+    }
+
+    function trialHardCost() {
+      const difficulty = state.trial.selected.difficulty;
+      return {
+        money: Math.max(1000, Math.round(state.trial.selected.budget / 6)),
+        hours: 3 + difficulty
+      };
+    }
+
+    function randomHardAttackName() {
+      const names = ["Call Expert Witness", "Impeach Testimony", "Introduce Exhibit", "Cross-Examine", "Deliver Closing Point", "File Emergency Motion"];
+      return names[Math.floor(Math.random() * names.length)];
+    }
+
+    function randomTrialFlair() {
+      return TRIAL_FLAIR_LINES[Math.floor(Math.random() * TRIAL_FLAIR_LINES.length)];
+    }
+
+    function rollTrialIntent() {
+      const t = state.trial.selected;
+      const roll = Math.random();
+      if (roll < 0.4) state.trial.intent = { type: "Attack", attack: t.attack, defense: 0, heal: 0 };
+      else if (roll < 0.65) state.trial.intent = { type: "Defend", attack: 0, defense: t.defense, heal: 0 };
+      else if (roll < 0.75) state.trial.intent = { type: "Big Heal", attack: 0, defense: 0, heal: t.heal * 2 };
+      else if (roll < 0.9) state.trial.intent = { type: "Heal + Attack", attack: Math.round(t.attack * 0.7), defense: 0, heal: t.heal };
+      else state.trial.intent = { type: "Heal + Defend", attack: 0, defense: Math.round(t.defense * 0.8), heal: t.heal };
+    }
+
+    function trialSpend(amount) {
+      if (state.trial.budget - state.trial.spent < amount) return false;
+      if (state.money < amount) return false;
+      spend(amount);
+      state.trial.spent += amount;
+      return true;
+    }
+
+    function useTrialHours(amount) {
+      if (state.trial.firmHours < amount) return false;
+      state.trial.firmHours -= amount;
+      return true;
+    }
+
+    function trialDamage(amount) {
+      const blocked = Math.min(state.trial.enemyShield, amount);
+      state.trial.enemyShield -= blocked;
+      state.trial.enemyHp = Math.max(0, state.trial.enemyHp - (amount - blocked));
+    }
+
+    function animateTrialSide(id, className) {
+      const el = $(id);
+      if (!el) return;
+      el.classList.remove(className);
+      void el.offsetWidth;
+      el.classList.add(className);
+      setTimeout(() => el.classList.remove(className), 360);
+    }
+
+    function intentText(intent) {
+      if (!intent) return "Waiting";
+      if (intent.type === "Attack") return `Attack ${intent.attack}`;
+      if (intent.type === "Defend") return `Defend ${intent.defense}`;
+      if (intent.type === "Big Heal") return `Heal ${intent.heal}`;
+      if (intent.type === "Heal + Attack") return `Heal ${intent.heal} / Attack ${intent.attack}`;
+      return `Heal ${intent.heal} / Defend ${intent.defense}`;
+    }
+
+    function trialPlayerMove(kind) {
+      const difficulty = state.trial.selected.difficulty;
+      const baseAttack = 10 + difficulty;
+      const baseDefend = 9 + difficulty;
+      if (kind === "basicAttack") {
+        animateTrialSide("trial-player-side", "attack-anim");
+        trialDamage(baseAttack);
+      }
+      if (kind === "basicDefend") {
+        animateTrialSide("trial-player-side", "defense-anim");
+        state.trial.shield += baseDefend;
+      }
+      if (kind === "hardAttack" || kind === "hardDefend") {
+        const cost = state.trial.currentCost || trialHardCost();
+        if (state.trial.budget - state.trial.spent < cost.money || state.money < cost.money || state.trial.firmHours < cost.hours) {
+          showToast("Not enough trial resources.", "danger");
+          return;
+        }
+        trialSpend(cost.money);
+        useTrialHours(cost.hours);
+        if (kind === "hardAttack") {
+          animateTrialSide("trial-player-side", "attack-anim");
+          trialDamage(Math.round(baseAttack * 2.4));
+        }
+        if (kind === "hardDefend") {
+          animateTrialSide("trial-player-side", "defense-anim");
+          state.trial.credibility = Math.min(100, state.trial.credibility + Math.round(baseDefend * 2.3));
+        }
+      }
+      if (state.trial.enemyHp <= 0) return finishTrial(true);
+      state.trial.actionPoints -= 1;
+      if (state.trial.actionPoints > 0) {
+        renderTrial();
+        return;
+      }
+      trialEnemyTurn();
+    }
+
+    function trialEnemyTurn() {
+      const intent = state.trial.intent;
+      state.trial.enemyHp = Math.min(state.trial.enemyMaxHp, state.trial.enemyHp + intent.heal);
+      state.trial.enemyShield = intent.defense;
+      if (intent.attack) animateTrialSide("trial-enemy-side", "attack-anim");
+      if (intent.defense || intent.heal) animateTrialSide("trial-enemy-side", "defense-anim");
+      const blocked = Math.min(state.trial.shield, intent.attack);
+      state.trial.shield = 0;
+      state.trial.credibility = Math.max(0, state.trial.credibility - (intent.attack - blocked));
+      if (state.trial.credibility <= 0) return finishTrial(false);
+      state.trial.turn += 1;
+      resetTrialActionsForTurn();
+      state.trial.currentCost = trialHardCost();
+      state.trial.currentAttackName = randomHardAttackName();
+      state.trial.flair = randomTrialFlair();
+      rollTrialIntent();
+      renderTrial();
+    }
+
+    function finishTrial(won) {
+      state.trial.active = false;
+      $("trial-exit").disabled = false;
+      if (won) {
+        state.docket.won += 1;
+        earn(state.trial.selected.reward);
+        state.trial.result = "Congratulations! You won the trial.";
+        showToast(`Trial won: +${money(state.trial.selected.reward)}`, "success");
+      } else {
+        state.docket.lost += 1;
+        state.trial.result = "Trial lost. The jury was not persuaded.";
+        showToast(`Trial lost. Spent ${money(state.trial.spent)}.`, "danger");
+      }
+      state.trial.pending = false;
+      state.trial.options = [];
+      state.trial.complete = false;
+      renderTrial();
+    }
+
+    function renderTrial() {
+      if (!$("trial-view") || $("trial-view").classList.contains("hidden")) return;
+      const t = state.trial.selected;
+      if (!t) return;
+      const credibilityPct = Math.max(0, state.trial.credibility);
+      const enemyPct = Math.max(0, (state.trial.enemyHp / state.trial.enemyMaxHp) * 100);
+      $("trial-credibility-text").textContent = `${state.trial.credibility}/100`;
+      $("trial-credibility-fill").style.width = `${credibilityPct}%`;
+      $("trial-enemy-hp-text").textContent = `${state.trial.enemyHp}/${state.trial.enemyMaxHp}`;
+      $("trial-enemy-hp-fill").style.width = `${enemyPct}%`;
+      const intent = state.trial.intent;
+      $("trial-flair").textContent = state.trial.flair || randomTrialFlair();
+      $("trial-intent").textContent = intent
+        ? `Turn ${state.trial.turn} • Enemy Intent: ${intentText(intent)}`
+        : (state.trial.result || "Turn 1 • Enemy Intent: Waiting");
+      if (state.trial.result) $("trial-intent").textContent = state.trial.result;
+      $("trial-resources").innerHTML = `
+        <div><span>Budget</span><strong>${money(state.trial.budget - state.trial.spent)}</strong></div>
+        <div><span>Firm Hrs</span><strong>${state.trial.firmHours}</strong></div>
+        <div><span>Spent</span><strong>${money(state.trial.spent)}</strong></div>
+        <div><span>Moves</span><strong>${state.trial.actionPoints}</strong></div>
+      `;
+      const difficulty = t.difficulty;
+      const basicAttack = 10 + difficulty;
+      const basicDefend = 9 + difficulty;
+      const cost = state.trial.currentCost || trialHardCost();
+      state.trial.currentCost = cost;
+      const hardAttackDamage = Math.round(basicAttack * 2.4);
+      const hardCredibility = Math.round(basicDefend * 2.3);
+      $("trial-extra-one").innerHTML = `Add 1 Move<span>10 Firm hrs</span>`;
+      $("trial-extra-two").innerHTML = `Add 2 Moves<span>24 Firm hrs</span>`;
+      $("trial-extra-one").disabled = !state.trial.active || state.trial.extraMovesBought > 0 || state.trial.firmHours < 10;
+      $("trial-extra-two").disabled = !state.trial.active || state.trial.extraMovesBought > 0 || state.trial.firmHours < 24;
+      $("trial-basic-attack").innerHTML = `Basic Argument<span>Free • ${basicAttack} damage</span>`;
+      $("trial-basic-defend").innerHTML = `Basic Defense<span>Free • ${basicDefend} shield</span>`;
+      $("trial-hard-attack").innerHTML = `${state.trial.currentAttackName}<span>${hardAttackDamage} damage • ${money(cost.money)} + ${cost.hours} Firm hrs</span>`;
+      $("trial-hard-defend").innerHTML = `Rehabilitate Credibility<span>+${hardCredibility} credibility • ${money(cost.money)} + ${cost.hours} Firm hrs</span>`;
+      const disabled = !state.trial.active;
+      ["trial-basic-attack", "trial-basic-defend", "trial-hard-attack", "trial-hard-defend"].forEach((id) => $(id).disabled = disabled);
+    }
+
+    function render() {
+      renderHeader();
+      renderFamily();
+      renderDiorama();
+      renderDashboard();
+      renderUpgrades();
+      renderFooter();
+      renderDocket();
+      renderTrial();
+    }
+
+    function renderHeader() {
+      $("firm-name-top").textContent = state.firmName;
+      $("day").textContent = state.day;
+      $("money").textContent = money(state.money);
+      $("money").className = `value ${state.money >= 0 ? "green" : "red"}`;
+      $("rent").textContent = money(currentRent());
+
+      const until = state.day % 30 === 0 ? 0 : 30 - (state.day % 30);
+      $("rent-days").textContent = until;
+      $("rent-days").className = until <= 5 ? "red" : "";
+    }
+
+    function renderFamily() {
+      $("license-status").textContent = `${state.licenseMarks}/10`;
+
+      if (state.disbarred) {
+        $("hours").textContent = "DISBARRED";
+        $("strikes").innerHTML = `<span class="strike on">X</span>`;
+        return;
+      }
+
+      if (state.divorced) {
+        $("hours").textContent = "DIVORCED";
+        $("strikes").innerHTML = `<span class="strike on">X</span>`;
+        return;
+      }
+
+      $("hours").textContent = `${state.consecutiveHours}/50h`;
+      $("strikes").innerHTML = [0, 1, 2]
+        .map((n) => `<span class="strike ${n < state.strikes ? "on" : ""}">X</span>`)
+        .join("");
+    }
+
+    function renderDiorama() {
+      const people = ["attorney"];
+      for (let i = 0; i < state.paralegals; i += 1) people.push("paralegal");
+      for (let i = 0; i < state.associates; i += 1) people.push("associate");
+
+      const roomCount = Math.max(1, Math.ceil(state.capacity / 2));
+      $("rooms").innerHTML = Array.from({ length: roomCount }, (_, roomIndex) => {
+        const first = people[roomIndex * 2];
+        const second = people[roomIndex * 2 + 1];
+        return `<div class="room">${first ? personSvg(first) : ""}${second ? personSvg(second) : ""}</div>`;
+      }).join("");
+    }
+
+    function personSvg(type) {
+      const suits = { attorney: "#1e293b", paralegal: "#b91c1c", associate: "#1d4ed8" };
+      const ties = { attorney: "#ef4444", paralegal: "#111827", associate: "#fde047" };
+
+      return `
+        <svg class="person" viewBox="0 0 12 20" aria-hidden="true">
+          <rect x="2" y="19" width="8" height="1" fill="rgba(0,0,0,.35)" />
+          <rect x="3" y="1" width="6" height="5" fill="#fcd34d" />
+          <rect data-hair x="3" y="0" width="6" height="1" fill="#451a03" />
+          <rect data-hair x="2" y="1" width="1" height="3" fill="#451a03" />
+          <rect data-hair x="9" y="1" width="1" height="3" fill="#451a03" />
+          <rect x="4" y="3" width="1" height="1" fill="#000" />
+          <rect x="7" y="3" width="1" height="1" fill="#000" />
+          <rect x="2" y="6" width="8" height="7" fill="${suits[type]}" />
+          <rect x="5" y="6" width="2" height="2" fill="#fff" />
+          <rect data-tie x="5.5" y="6" width="1" height="4" fill="${ties[type]}" />
+          <g class="arm-left"><rect x="1" y="6" width="1" height="5" fill="${suits[type]}" /><rect x="1" y="11" width="1" height="1" fill="#fcd34d" /></g>
+          <g class="arm-right"><rect x="10" y="6" width="1" height="5" fill="${suits[type]}" /><rect x="10" y="11" width="1" height="1" fill="#fcd34d" /></g>
+          <rect x="3" y="13" width="2" height="6" fill="#111827" />
+          <rect x="7" y="13" width="2" height="6" fill="#111827" />
+        </svg>`;
+    }
+
+    function renderDashboard() {
+      const aGross = attorneyGross();
+      const pGross = paraGross();
+      const sGross = assocGross();
+      const totalHours = state.hours + state.paralegals * state.paraHours + state.associates * state.assocHours;
+      const paraSynergy = state.paralegals * 10 + Math.min(state.paralegals, state.associates) * 50;
+      const assocSynergy = state.associates * 20;
+
+      $("dashboard").innerHTML = `
+        ${dashboardRow("Partner", "You", state.rate, state.hours, aGross, "n/a")}
+        ${dashboardRow("Paralegal", state.paralegals, state.paraRate, state.paraHours, pGross, `${paraSynergy}% Ptnr`)}
+        ${dashboardRow("Associate", state.associates, state.assocRate, state.assocHours, sGross, `${assocSynergy}% Ptnr`)}
+        <tr class="total-row">
+          <td>Totals</td>
+          <td class="num">${staffCount()}</td>
+          <td class="num">-</td>
+          <td class="num">${totalHours}</td>
+          <td class="num gross">${money(aGross + pGross + sGross)}</td>
+          <td class="num"></td>
+        </tr>`;
+    }
+
+    function dashboardRow(person, count, rate, hours, gross, synergy) {
+      return `
+        <tr>
+          <td>${person}</td>
+          <td class="num">${count}</td>
+          <td class="num">$${rate}</td>
+          <td class="num">${hours}</td>
+          <td class="num gross">${money(gross)}</td>
+          <td class="num">${synergy}</td>
+        </tr>`;
+    }
+
+    function renderUpgrades() {
+      const partnerItems = [
+        upgrade("rate", "Rate", "+$100/hr", 1000 * 2 ** state.levelRate),
+        state.hours >= 10 ? maxed("Hours", "Max 10h") : upgrade("hours", "Hours", "+1h/day", 1000 * 2 ** state.levelHours)
+      ];
+
+      const paraItems = [
+        upgrade("hirePara", "Hire", "Requires space", 4000, staffCount() >= state.capacity),
+        upgrade("paraRate", "Rate", "+$10/hr", 1000 * 2 ** state.levelParaRate, state.paralegals === 0),
+        state.paraHours >= 8 ? maxed("Hours", "Max 8h") : upgrade("paraHours", "Hours", "+1h/day", 1000 * 2 ** state.levelParaHours, state.paralegals === 0)
+      ];
+
+      const assocItems = [
+        upgrade("hireAssoc", "Hire", "Requires space", 10000, staffCount() >= state.capacity),
+        upgrade("assocRate", "Rate", "+$50/hr", 2000 * 2 ** state.levelAssocRate, state.associates === 0),
+        state.assocHours >= 12 ? maxed("Hours", "Max 12h") : upgrade("assocHours", "Hours", "+1h/day", 2000 * 2 ** state.levelAssocHours, state.associates === 0)
+      ];
+
+      const columns = [
+        upgradeColumn("Partner", partnerItems),
+        upgradeColumn("Paralegal", paraItems),
+        upgradeColumn("Associate", assocItems),
+        `<div class="office-upgrade">${upgrade("expand", "Expand Office", `Rent becomes ${money(rentAfterExpansion())}`, state.expandCost)}</div>`
+      ];
+
+      $("capacity").textContent = `Staff: ${staffCount()}/${state.capacity}`;
+      $("upgrades").innerHTML = columns.join("");
+    }
+
+    function upgradeColumn(title, items) {
+      return `<div class="upgrade-column"><div class="upgrade-column-title">${title}</div>${items.join("")}</div>`;
+    }
+
+    function upgrade(code, title, note, cost, blocked = false) {
+      const disabled = state.money < cost || blocked;
+      return `
+        <button class="upgrade" data-upgrade="${code}" ${disabled ? "disabled" : ""}>
+          <span><strong>${title}</strong><small>${note}</small></span>
+          <span class="cost">-${money(cost)}</span>
+        </button>`;
+    }
+
+    function maxed(title, note) {
+      return `
+        <button class="upgrade" disabled>
+          <span><strong>${title}</strong><small>${note}</small></span>
+          <span class="cost">MAX</span>
+        </button>`;
+    }
+
+    function divider() {
+      return `<div class="divider" aria-hidden="true"></div>`;
+    }
+
+    function renderFooter() {
+      const net = dailyNet(true);
+      const restNet = dailyNet(false);
+
+      $("work-one").innerHTML = `Work 1 Day <span>${signedMoney(net)}</span>`;
+      $("rest-one").innerHTML = `Rest 1 Day <span>${signedMoney(restNet)}</span>`;
+
+      if (state.unlockedGrind) {
+        $("work-seven").innerHTML = `7-Day Grind <span>${signedMoney(net * 7)}</span>`;
+      } else {
+        $("work-seven").innerHTML = `Unlock 7-Day Grind <span>-$10,000</span>`;
+      }
+    }
+
+    function renderDocket() {
+      if (state.docket.needed > 0 && !state.docket.draft) generateDraft();
+
+      const prestige = hasPrestige();
+      $("prestige-status").textContent = prestige ? "🏆 Prestige" : "No Prestige";
+      $("prestige-status").classList.toggle("no-prestige", !prestige);
+      $("cases-won").textContent = state.docket.won;
+      $("cases-lost").textContent = state.docket.lost;
+      $("case-count").textContent = `${3 - state.docket.needed}/3`;
+      $("case-slots").innerHTML = [0, 1, 2].map((index) => caseSlot(state.docket.selected[index])).join("");
+
+      const done = state.docket.needed <= 0;
+      $("case-picker").classList.toggle("hidden", done);
+      $("return-firm").disabled = !done;
+      $("return-firm").innerHTML = done
+        ? `Return to Firm <span>Start the month</span>`
+        : `Select ${state.docket.needed} More <span>Pick all cases first</span>`;
+
+      if (!done) {
+        $("pick-safe").innerHTML = casePick("Safe Bet", state.docket.draft.safe, "Pick");
+        $("pick-hard").innerHTML = casePick("High Risk", state.docket.draft.hard, "Pick");
+        $("reroll").disabled = state.money < state.docket.rerollCost;
+        $("reroll").innerHTML = `<strong>Discard</strong><span class="amber" style="font-size:24px">Dice</span><small>New options</small><span class="pick-label">Reroll -${money(state.docket.rerollCost)}</span>`;
+      }
+      renderTrialSelect();
+    }
+
+    function renderTrialSelect() {
+      const panel = $("trial-select-panel");
+      if (state.day < 31) {
+        panel.classList.add("hidden");
+        return;
+      }
+      panel.classList.remove("hidden");
+      if (!state.trial.options.length && !state.trial.selected) generateTrialOptions();
+      if (state.trial.selected) {
+        $("trial-selected-note").classList.remove("hidden");
+        $("trial-selected-note").innerHTML = `<strong>${state.trial.selected.name}</strong><br>Trial set for month-end • Reward ${money(state.trial.selected.reward)}`;
+        $("trial-options").innerHTML = "";
+        return;
+      }
+      $("trial-selected-note").classList.add("hidden");
+      $("trial-options").innerHTML = state.trial.options.map((trialCase, index) => `
+        <button class="trial-card" data-trial="${index}">
+          <strong>${trialCase.name}</strong>
+          <span>Difficulty ${trialCase.difficulty}/5</span>
+          <span>HP ${trialCase.hp} • ATK ${trialCase.attack}</span>
+          <span>Budget ${money(trialCase.budget)}</span>
+          <span class="green">Reward ${money(trialCase.reward)}</span>
+        </button>
+      `).join("");
+    }
+
+    function exitTrial() {
+      if (state.trial.active) return;
+      stopTrialSongs();
+      resetTrialState();
+      generateDraft();
+      switchView("docket");
+    }
+
+    function caseSlot(caseItem) {
+      if (!caseItem) return `<div class="empty-slot">Empty Slot</div>`;
+      return `
+        <div class="case-slot">
+          <div><small>${caseItem.type}</small><strong>${caseItem.prob}% Win</strong></div>
+          <div style="text-align:right"><small>Payout</small><strong class="green">${money(caseItem.pay)}</strong></div>
+        </div>`;
+    }
+
+    function casePick(title, caseItem, label) {
+      return `
+        <strong>${title}</strong>
+        <span class="green" style="font-weight:900">${money(caseItem.pay)}</span>
+        <small>${caseItem.prob}% win chance</small>
+        <span class="pick-label">${label}</span>`;
+    }
+
+    function playThemeSong() {
+      const audio = $("theme-song");
+      if (!audio) return;
+      audio.volume = 0.35;
+      audio.play().catch(() => {});
+    }
+
+    function stopThemeSong() {
+      const audio = $("theme-song");
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function playEventSong(loop) {
+      const audio = $("event-song");
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+      audio.loop = loop;
+      audio.volume = 0.45;
+      audio.play().catch(() => {});
+    }
+
+    function stopEventSong() {
+      const audio = $("event-song");
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function playCardSong() {
+      stopEventSong();
+      const audio = $("card-song");
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+      audio.loop = true;
+      audio.volume = 0.2;
+      audio.play().catch(() => {});
+    }
+
+    function stopCardSong() {
+      const audio = $("card-song");
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function playMonthSong() {
+      stopEventSong();
+      const audio = $("month-song");
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+      audio.loop = true;
+      audio.volume = 0.2;
+      audio.play().catch(() => {});
+    }
+
+    function stopMonthSong() {
+      const audio = $("month-song");
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function stopTrialSongs() {
+      ["trial-song-5", "trial-song-6", "trial-song-7"].forEach((id) => {
+        const audio = $(id);
+        if (!audio) return;
+        audio.pause();
+        audio.currentTime = 0;
+      });
+    }
+
+    function playRandomTrialSong() {
+      stopTrialSongs();
+      const ids = ["trial-song-5", "trial-song-6", "trial-song-7"];
+      const audio = $(ids[Math.floor(Math.random() * ids.length)]);
+      if (!audio) return;
+      audio.loop = true;
+      audio.volume = 0.35;
+      audio.play().catch(() => {});
+    }
+
+    function bindEvents() {
+      $("intro-art").innerHTML = personSvg("attorney");
+      $("intro-button").addEventListener("click", () => {
+        if (introStep === 0) {
+          playThemeSong();
+          $("intro-art").classList.add("hidden");
+          $("intro-copy").classList.remove("hidden");
+          $("intro-button").textContent = "Next";
+          introStep = 1;
+          return;
+        }
+        if (introStep === 1) {
+          $("intro-copy").classList.add("hidden");
+          $("firm-entry").classList.remove("hidden");
+          $("intro-button").textContent = "Open Firm";
+          introStep = 2;
+          return;
+        }
+        const typedName = $("firm-name-input").value.trim();
+        const baseName = typedName || "New Partner";
+        state.firmName = `${baseName} & Associates, P.L.L.C.`;
+        stopThemeSong();
+        $("intro-modal").classList.remove("open");
+        generateDraft();
+        switchView("docket");
+      });
+
+      $("open-docket").addEventListener("click", () => switchView("docket"));
+      $("return-firm").addEventListener("click", () => switchView("firm"));
+      $("pick-safe").addEventListener("click", () => selectCase("safe"));
+      $("pick-hard").addEventListener("click", () => selectCase("hard"));
+      $("reroll").addEventListener("click", rerollDraft);
+      $("trial-options").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-trial]");
+        if (button) selectTrialCase(Number(button.dataset.trial));
+      });
+      $("trial-start").addEventListener("click", startTrial);
+      $("trial-settle").addEventListener("click", settleTrial);
+      $("trial-extra-one").addEventListener("click", () => buyTrialExtraMoves(1));
+      $("trial-extra-two").addEventListener("click", () => buyTrialExtraMoves(2));
+      $("trial-basic-attack").addEventListener("click", () => trialPlayerMove("basicAttack"));
+      $("trial-basic-defend").addEventListener("click", () => trialPlayerMove("basicDefend"));
+      $("trial-hard-attack").addEventListener("click", () => trialPlayerMove("hardAttack"));
+      $("trial-hard-defend").addEventListener("click", () => trialPlayerMove("hardDefend"));
+      $("trial-exit").addEventListener("click", exitTrial);
+      $("work-one").addEventListener("click", (event) => advanceDays(true, 1, event));
+      $("rest-one").addEventListener("click", (event) => advanceDays(false, 1, event));
+      $("work-seven").addEventListener("click", (event) => {
+        if (!state.unlockedGrind) {
+          if (state.money < 10000) {
+            showToast("The 7-Day Grind upgrade costs $10,000.");
+            return;
+          }
+          spend(10000);
+          state.unlockedGrind = true;
+          floatText(event.currentTarget, "-$10,000", false);
+          render();
+          return;
+        }
+        advanceDays(true, 7, event);
+      });
+
+      $("upgrades").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-upgrade]");
+        if (button && !button.disabled) tryUpgrade(button.dataset.upgrade);
+      });
+
+      $("divorce-close").addEventListener("click", () => $("divorce-modal").classList.remove("open"));
+      $("ethics-choice-a").addEventListener("click", () => chooseEthics(0));
+      $("ethics-choice-b").addEventListener("click", () => chooseEthics(1));
+      $("month-close").addEventListener("click", closeMonth);
+      $("vanity-close").addEventListener("click", closeVanityNotice);
+      $("reset-game").addEventListener("click", () => window.location.reload());
+      $("reset-disbarred").addEventListener("click", () => window.location.reload());
+    }
+
+    bindEvents();
+    render();
+  </script>
+</body>
+</html>
